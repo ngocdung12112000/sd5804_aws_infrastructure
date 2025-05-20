@@ -1,0 +1,23 @@
+# k8s/frontend-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: default # Or your target namespace
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: react-app
+        image: Y811492260998.dkr.ecr.ap-southeast-1.amazonaws.com/bndz/frontend:latest
+        ports:
+        - containerPort: 3000 # Nginx default port
