@@ -1,12 +1,7 @@
-variable "region" {
-  type        = string
-  description = "aws region where the resources are being created"
-}
-
 variable "vpc_name" {
   type        = string
   description = "name of the vpc to be created"
-  default     = "eks-vpc"
+  default     = "platformwale"
 }
 
 variable "vpc_cidr" {
@@ -15,14 +10,13 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
-variable "cluster_name" {
+variable "eks_cluster_name" {
   type        = string
   description = "eks cluster name"
-  default     = "devops-eks"
 }
 
 variable "k8s_version" {
   type        = string
-  description = "k8s version"
-  default     = "1.32"
+  description = "kubernetes version"
+  default     = "1.27"
 }

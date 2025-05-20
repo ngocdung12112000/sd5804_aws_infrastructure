@@ -1,5 +1,3 @@
-.terraform/*
+.terraform/
 .terraform.lock.hcl
-bndz-key-pair.pem
-terraform.tfstate
-terraform.tfstate.backup
+terraform.*
