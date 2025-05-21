@@ -1,0 +1,78 @@
+// Jenkinsfile
+pipeline {
+    agent any // Runs on the Jenkins master or any available agent. For Docker builds, master needs Docker.
+
+    environment {
+        AWS_REGION                  = 'ap-southeast-1' // Set your AWS region
+        AWS_ACCOUNT_ID              = '811492260998' // Assuming AWS Steps plugin for dynamic account ID
+        FRONTEND_ECR_REPOSITORY_NAME= 'bndz/frontend' // From ecr.tf (name, not full URL initially)
+        BACKEND_ECR_REPOSITORY_NAME = 'bndz/backend'  // From ecr.tf
+        EKS_CLUSTER_NAME            = 'my-eks-cluster'  // From eks.tf
+        K8S_NAMESPACE               = 'default' // Or your target Kubernetes namespace
+        // Derived ECR URLs
+        FRONTEND_ECR_URL            = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_ECR_REPOSITORY_NAME}"
+        BACKEND_ECR_URL             = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_ECR_REPOSITORY_NAME}"
+        // Kubeconfig for Jenkins user (ensure it's configured in Phase 9, Step 6)
+        KUBECONFIG_PATH             = '/var/lib/jenkins/.kube/config'
+    }
+
+    stages {
+        stage('Setup AWS CLI and Kubectl Context') {
+            steps {
+                sh "aws --version"
+                sh "kubectl version --client"
+                sh "kubectl --kubeconfig ${env.KUBECONFIG_PATH} config current-context"
+                sh "kubectl --kubeconfig ${env.KUBECONFIG_PATH} get nodes -o wide"
+            }
+        }
+
+        stage('Deploy to EKS') {
+            steps {
+                script {
+                    env.BACKEND_IMAGE_URI = "${env.BACKEND_ECR_URL}:latest"
+                    if (env.BACKEND_IMAGE_URI) {
+                        echo "Deploying Backend: ${env.BACKEND_IMAGE_URI}"
+                        sh """
+                        sed -i 's|image:.*${env.BACKEND_ECR_REPOSITORY_NAME}:.*|image: ${env.BACKEND_IMAGE_URI}|g' Manifest/backend-deployment.yaml
+                        cat Manifest/backend-deployment.yaml
+                        kubectl --kubeconfig ${env.KUBECONFIG_PATH} apply -f Manifest/backend-deployment.yaml --namespace=${env.K8S_NAMESPACE}
+                        kubectl --kubeconfig ${env.KUBECONFIG_PATH} apply -f Manifest/backend-service.yaml --namespace=${env.K8S_NAMESPACE}
+                        kubectl --kubeconfig ${env.KUBECONFIG_PATH} rollout status deployment/backend-app-deployment --namespace=${env.K8S_NAMESPACE} --timeout=5m
+                        """
+                    } else {
+                        echo "Backend image URI not found. Skipping backend deployment."
+                    }
+
+                    env.FRONTEND_IMAGE_URI = "${env.FRONTEND_ECR_URL}:latest"
+                    if (env.FRONTEND_IMAGE_URI) {
+                        echo "Deploying Frontend: ${env.FRONTEND_IMAGE_URI}"
+                        sh """
+                        sed -i 's|image:.*${env.FRONTEND_ECR_REPOSITORY_NAME}:.*|image: ${env.FRONTEND_IMAGE_URI}|g' Manifest/frontend-deployment.yaml
+                        cat Manifest/frontend-deployment.yaml
+                        kubectl --kubeconfig ${env.KUBECONFIG_PATH} apply -f Manifest/frontend-deployment.yaml --namespace=${env.K8S_NAMESPACE}
+                        kubectl --kubeconfig ${env.KUBECONFIG_PATH} apply -f Manifest/frontend-service.yaml --namespace=${env.K8S_NAMESPACE}
+                        kubectl --kubeconfig ${env.KUBECONFIG_PATH} rollout status deployment/frontend-app-deployment --namespace=${env.K8S_NAMESPACE} --timeout=5m
+                        """
+                    } else {
+                        echo "Frontend image URI not found. Skipping frontend deployment."
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline finished.'
+            // cleanWs() // Clean up workspace
+        }
+        success {
+            echo 'Pipeline Succeeded!'
+            // Add notifications (Email, Slack, etc.)
+        }
+        failure {
+            echo 'Pipeline Failed!'
+            // Add notifications
+        }
+    }
+}
