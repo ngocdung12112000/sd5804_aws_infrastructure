@@ -20,4 +20,4 @@ spec:
       - name: backend-app-container
         image: 811492260998.dkr.ecr.ap-southeast-1.amazonaws.com/bndz/backend:latest
         ports:
-        - containerPort: 3000 # Port your backend Node.js app listens on
+        - containerPort: 8000

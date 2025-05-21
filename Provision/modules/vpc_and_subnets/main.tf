@@ -137,12 +137,11 @@ resource "aws_security_group" "jenkins_sg" {
 
 resource "aws_instance" "jenkins_server" {
   ami                    = "ami-0afc7fe9be84307e4"
-  instance_type          = "t3.large"             // Jenkins can be memory/CPU intensive; t3.medium might also work.
-  subnet_id              = element(module.vpc_and_subnets.public_subnets, 0) // Deploy in a public subnet for easier initial access
-  vpc_security_group_ids = [aws_security_group.jenkins_sg.id, module.vpc_and_subnets.default_security_group_id] // Allow public subnet SG to communicate with Jenkins SG
+  instance_type          = "t3.medium"             
+  subnet_id              = element(module.vpc_and_subnets.public_subnets, 0) 
+  vpc_security_group_ids = [aws_security_group.jenkins_sg.id, module.vpc_and_subnets.default_security_group_id] 
 
-  associate_public_ip_address = true // Public IP for easy access
-  #iam_instance_profile   = aws_iam_instance_profile.jenkins_ec2_instance_profile.name
+  associate_public_ip_address = true 
   key_name = var.ec2_key_name
 
   # User data script to install Jenkins, Docker, kubectl, AWS CLI
