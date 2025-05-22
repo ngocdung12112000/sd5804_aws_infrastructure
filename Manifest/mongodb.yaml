@@ -28,7 +28,7 @@ kind: ConfigMap
 metadata:
   name: mongo-config
 data:
-  MONGODB_INITDB_ROOT_USERNAME: "dungbachngoc20"
+  MONGODB_INITDB_ROOT_USERNAME: "user"
 ---
 apiVersion: v1
 kind: Secret
@@ -36,7 +36,7 @@ metadata:
   name: mongo-secrets
 type: Opaque
 data:
-  MONGODB_INITDB_ROOT_PASSWORD: WITMMCBSepzDoUDC
+  MONGODB_INITDB_ROOT_PASSWORD: cGFzc3dvcmQK
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -77,4 +77,5 @@ spec:
         resources:
           requests:
             storage: "1Gi"
+
 
