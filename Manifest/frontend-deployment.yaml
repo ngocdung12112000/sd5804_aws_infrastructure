@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: frontend-app-deployment
   namespace: default # Or your target namespace
   labels:
     app: frontend
@@ -20,4 +20,4 @@ spec:
       - name: react-app
         image: Y811492260998.dkr.ecr.ap-southeast-1.amazonaws.com/bndz/frontend:latest
         ports:
-        - containerPort: 3000 # Nginx default port
+        - containerPort: 5173 # Nginx default port
